@@ -1,7 +1,6 @@
 import * as CANNON from "cannon-es";
-import * as THREE from "three";
 import cannonDebugger from "cannon-es-debugger";
-import { Vec3 } from "cannon-es";
+import * as THREE from "three";
 
 const FORCE_FORWARD_DIRECTION = 3;
 const FORCE_RIGHT_DIRECTION = 1;

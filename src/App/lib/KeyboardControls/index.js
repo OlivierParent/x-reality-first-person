@@ -1,5 +1,14 @@
+const QWERTY = {
+  LEFT: "KeyA",
+  UP: "KeyW",
+};
+const AZERTY = {
+  LEFT: "KeyQ",
+  UP: "KeyZ",
+};
+
 class KeyboardControls {
-  static #MOVE_SPEED = 0.1;
+  static #keyboard = QWERTY;
   static #DIRECTION = {
     BACK: -1,
     DOWN: -1,
@@ -9,73 +18,93 @@ class KeyboardControls {
     RIGHT: 1,
     UP: 1,
   };
+
   static #forwardDirection = KeyboardControls.#DIRECTION.NONE;
   static #rightDirection = KeyboardControls.#DIRECTION.NONE;
-
-  static get MOVE_SPEED() {
-    return KeyboardControls.#MOVE_SPEED;
-  }
+  static #upDirection = KeyboardControls.#DIRECTION.NONE;
 
   static get forwardDirection() {
     return KeyboardControls.#forwardDirection;
   }
+
   static get rightDirection() {
     return KeyboardControls.#rightDirection;
   }
 
+  static get upDirection() {
+    return KeyboardControls.#upDirection;
+  }
+
   static keyDownHandler(event) {
-    console.log("onKeyDown", `'${event.key}'`);
-    switch (event.key) {
+    console.log("KeyboardControls: keyDownHandler", `'${event.code}'`);
+    switch (event.code) {
       case "ArrowDown":
-      case "s":
+      case "KeyS":
         KeyboardControls.#forwardDirection = KeyboardControls.#DIRECTION.BACK;
         break;
       case "ArrowLeft":
-      case "a":
+      case "KeyA":
+      case KeyboardControls.#keyboard.LEFT:
         KeyboardControls.#rightDirection = KeyboardControls.#DIRECTION.LEFT;
         break;
       case "ArrowRight":
-      case "d":
+      case "KeyD":
         KeyboardControls.#rightDirection = KeyboardControls.#DIRECTION.RIGHT;
         break;
       case "ArrowUp":
-      case "w":
+      case KeyboardControls.#keyboard.UP:
         KeyboardControls.#forwardDirection =
           KeyboardControls.#DIRECTION.FORWARD;
+        break;
+      case "KeyF":
+        KeyboardControls.#upDirection = KeyboardControls.#DIRECTION.DOWN;
+        break;
+      case "KeyR":
+        KeyboardControls.#upDirection = KeyboardControls.#DIRECTION.UP;
         break;
     }
   }
 
   static keyUpHandler(event) {
-    console.log("onKeyUp", `'${event.key}'`);
-    switch (event.key) {
+    console.log("KeyboardControls: keyUpHandler", `'${event.code}'`);
+    switch (event.code) {
       case "ArrowDown":
       case "ArrowUp":
-      case "s":
-      case "w":
+      case "KeyS":
+      case KeyboardControls.#keyboard.UP:
         KeyboardControls.#forwardDirection = KeyboardControls.#DIRECTION.NONE;
         break;
       case "ArrowLeft":
       case "ArrowRight":
-      case "a":
-      case "d":
+      case "KeyD":
+      case KeyboardControls.#keyboard.LEFT:
         KeyboardControls.#rightDirection = KeyboardControls.#DIRECTION.NONE;
         break;
-      case " ":
+      case "KeyF":
+      case "KeyR":
+        KeyboardControls.#upDirection = KeyboardControls.#DIRECTION.NONE;
         break;
     }
   }
 
   static addEventListeners() {
-    console.log("addEventListeners");
+    console.info("KeyboardControls: addEventListeners");
     window.addEventListener("keydown", KeyboardControls.keyDownHandler);
     window.addEventListener("keyup", KeyboardControls.keyUpHandler);
   }
 
   static removeEventListeners() {
-    console.log("removeEventListeners");
+    console.info("KeyboardControls: removeEventListeners");
     window.removeEventListener("keydown", KeyboardControls.keyDownHandler);
     window.removeEventListener("keyup", KeyboardControls.keyUpHandler);
+  }
+
+  static setKeyboardAzerty() {
+    KeyboardControls.#keyboard = AZERTY;
+  }
+
+  static setKeyboardQwerty() {
+    KeyboardControls.#keyboard = QWERTY;
   }
 }
 

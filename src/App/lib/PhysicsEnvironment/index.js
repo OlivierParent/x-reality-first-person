@@ -1,10 +1,13 @@
 import * as CANNON from "cannon-es";
-import cannonDebugger from "cannon-es-debugger";
 import * as THREE from "three";
+import cannonDebugger from "cannon-es-debugger";
 
-const FORCE_FORWARD_DIRECTION = 3;
-const FORCE_RIGHT_DIRECTION = 1;
+const BOX_SIZE = 0.5; // m
 const GRAVITATIONAL_ACCELERATION = 9.80665; // m/s^2
+const VELOCITY = {
+  FORWARD_DIRECTION: 3,
+  RIGHT_DIRECTION: 1,
+};
 
 class PhysicsEnvironment {
   static #bodies = [];
@@ -16,11 +19,11 @@ class PhysicsEnvironment {
   static #world = new CANNON.World();
 
   static get player() {
-    return PhysicsEnvironment.#playerBody;
+    return this.#playerBody;
   }
 
   /**
-   * Add a box.
+   * Add a physics box
    *
    * @param {CANNON.Vec3} dimensions
    * @param {CANNON.Vec3} position
@@ -28,55 +31,56 @@ class PhysicsEnvironment {
    * @return {number} index of body
    */
   static addBox(
-    dimensions = new CANNON.Vec3(1, 1, 1),
+    dimensions = new CANNON.Vec3(BOX_SIZE, BOX_SIZE, BOX_SIZE),
     mass = 1,
     position = new CANNON.Vec3(0, 0, 0)
   ) {
-    console.log("PhysicsEnvironment: initGround", dimensions, mass, position);
+    console.log("PhysicsEnvironment: addBox", dimensions, mass, position);
     const shape = new CANNON.Box(dimensions);
-    const body = new CANNON.Body({ mass, shape, position });
-    PhysicsEnvironment.#world.addBody(body);
-    const arrayLength = PhysicsEnvironment.#bodies.push(body);
+    const body = new CANNON.Body({ mass, position, shape });
+    this.#world.addBody(body);
+    const arrayLength = this.#bodies.push(body);
     return arrayLength - 1;
   }
 
   /**
+   * Cannon.js Debugger
    *
    * @param {THREE.scene} scene
    */
   static debug(scene) {
-    cannonDebugger(scene, this.#world.bodies);
+    cannonDebugger(scene, this.#bodies);
   }
 
   /**
-   * Initialize physics engine.
+   * Initialize physics engine
    */
   static init(controls) {
-    PhysicsEnvironment.#controls = controls;
-    PhysicsEnvironment.#time = Date.now(); // ms
-    PhysicsEnvironment.initWorld();
-    PhysicsEnvironment.initGround();
-    PhysicsEnvironment.initPlayer();
+    this.#controls = controls;
+    this.#time = Date.now();
+    this.initWorld();
+    this.initGround();
+    this.initPlayer();
   }
 
   /**
-   * initialize ground.
+   * Initialize ground
    */
   static initGround() {
     console.info("PhysicsEnvironment: initGround");
     const mass = 0;
     const shape = new CANNON.Plane();
-    PhysicsEnvironment.#groundBody = new CANNON.Body({ mass, shape });
-    PhysicsEnvironment.#groundBody.quaternion.setFromAxisAngle(
+    this.#groundBody = new CANNON.Body({ mass, shape });
+    this.#groundBody.quaternion.setFromAxisAngle(
       new CANNON.Vec3(1, 0, 0),
       THREE.MathUtils.degToRad(-90)
     );
-    PhysicsEnvironment.#world.addBody(PhysicsEnvironment.#groundBody);
+    this.#world.addBody(this.#groundBody);
 
     // stairs
     const stairsShape = new CANNON.Box(new CANNON.Vec3(1 / 2, 10 / 2, 0.1));
     const stairsBody = new CANNON.Body({ mass: 0, shape: stairsShape });
-    PhysicsEnvironment.#world.addBody(stairsBody);
+    this.#world.addBody(stairsBody);
     stairsBody.quaternion.setFromAxisAngle(
       new CANNON.Vec3(1, 0, 0),
       THREE.MathUtils.degToRad(-80 + 180)
@@ -84,7 +88,7 @@ class PhysicsEnvironment {
   }
 
   /**
-   * Initialize material.
+   * Initialize material
    */
   static initMaterial() {
     console.info("PhysicsEnvironment: initMaterial");
@@ -102,39 +106,41 @@ class PhysicsEnvironment {
    */
   static initPlayer() {
     console.info("PhysicsEnvironment: initPlayer");
-    const mass = 5;
-    const shape = new CANNON.Sphere(1);
-    PhysicsEnvironment.#playerBody = new CANNON.Body({ mass, shape });
-    PhysicsEnvironment.#playerBody.position.set(0, 5, 2);
-    PhysicsEnvironment.#world.addBody(PhysicsEnvironment.#playerBody);
+    const mass = 75; // kg
+    const position = new CANNON.Vec3(0, 5, 2);
+    const shape = new CANNON.Sphere(BOX_SIZE);
+    const body = new CANNON.Body({ mass, position, shape });
+    this.#bodies.push(body);
+    this.#playerBody = body;
+    this.#world.addBody(body);
   }
 
   /**
-   * Initialize world.
+   * Initialize world
    */
   static initWorld() {
     console.info("PhysicsEnvironment: initWorld");
-    PhysicsEnvironment.#world.gravity.set(0, -GRAVITATIONAL_ACCELERATION, 0);
-    PhysicsEnvironment.#world.broadphase = new CANNON.NaiveBroadphase();
+    this.#world.gravity.set(0, -GRAVITATIONAL_ACCELERATION, 0);
+    this.#world.broadphase = new CANNON.NaiveBroadphase();
   }
 
   /**
-   *
-   * @param {DateTime} time
+   * Simulation step
    */
-  static simulate(time) {
-    const deltaT = (time - PhysicsEnvironment.#time) / 1000; // s
+  static simulate() {
+    const time = Date.now();
+    const deltaT = (time - this.#time) / 1000; // s
 
-    const forceThreeVec = new THREE.Vector3(
-      PhysicsEnvironment.#controls.rightDirection * FORCE_RIGHT_DIRECTION,
-      PhysicsEnvironment.#playerBody.velocity.y,
-      PhysicsEnvironment.#controls.forwardDirection * -FORCE_FORWARD_DIRECTION
-    ).applyQuaternion(PhysicsEnvironment.#playerBody.quaternion);
+    const velocity = new THREE.Vector3(
+      this.#controls.rightDirection * VELOCITY.RIGHT_DIRECTION,
+      this.#playerBody.velocity.y,
+      this.#controls.forwardDirection * -VELOCITY.FORWARD_DIRECTION
+    ).applyQuaternion(this.#playerBody.quaternion);
+    this.#playerBody.velocity.x = velocity.x;
+    this.#playerBody.velocity.z = velocity.z;
 
-    PhysicsEnvironment.#playerBody.velocity.x = forceThreeVec.x;
-    PhysicsEnvironment.#playerBody.velocity.z = forceThreeVec.z;
-    PhysicsEnvironment.#world.step(deltaT);
-    PhysicsEnvironment.#time = time;
+    this.#world.step(deltaT);
+    this.#time = time;
   }
 }
 

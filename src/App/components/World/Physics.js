@@ -1,34 +1,26 @@
 import React, { useEffect, useRef } from "react";
+import * as CANNON from "cannon-es";
 import * as THREE from "three";
 import { useFrame, useThree } from "react-three-fiber";
-import { Box, Plane, Sphere, PointerLockControls } from "@react-three/drei";
-import { useControl } from "react-three-gui";
-import { KeyboardControls } from "App/lib";
-import { PhysicsEnvironment } from "App/lib";
-import * as CANNON from "cannon-es";
+import { Plane, PointerLockControls, Sphere } from "@react-three/drei";
+import { KeyboardControls, PhysicsEnvironment } from "App/lib";
 
-const NUMBER_OF_CUBES = 10;
-const RANDOM_COORDINATES = new Array(NUMBER_OF_CUBES).fill(null).map(() => {
-  const range = 10;
-  const size = 1;
-  return [
-    Math.floor(Math.random() * range - range / 2), // left to right
-    size / 2, //size / 2, //down to up
-    Math.floor(Math.random() * range - range / 2), // back to front
-  ];
+const BOX_SIZE = 0.5;
+const NUMBER_OF_BOXES = 10;
+const PLANE_SIZE = 10;
+const RANDOM_COORDINATES = new Array(NUMBER_OF_BOXES).fill(null).map(() => {
+  const x = Math.floor(Math.random() * PLANE_SIZE - PLANE_SIZE / 2);
+  const y = BOX_SIZE;
+  const z = Math.floor(Math.random() * PLANE_SIZE - PLANE_SIZE / 2);
+
+  return [x, y, z];
 });
 
-export default () => {
-  console.log("Physics");
-  const enablePointerLockControls = useControl("PointerLock Controls", {
-    group: "Controls",
-    type: "boolean",
-    value: true,
-  });
-  const pointerLockControlsRef = useRef();
+export default (props) => {
+  const pointerRef = useRef();
   const { scene } = useThree();
 
-  let boxes = new Array(NUMBER_OF_CUBES).fill(null).map((box, index) => {
+  let boxes = new Array(NUMBER_OF_BOXES).fill(null).map((box, index) => {
     const position = RANDOM_COORDINATES[index];
     const ref = useRef();
 
@@ -38,59 +30,50 @@ export default () => {
   useEffect(() => {
     console.info("useEffect: KeyboardControls");
     KeyboardControls.addEventListeners();
+    // KeyboardControls.setKeyboardAzerty();
 
     return KeyboardControls.removeEventListeners;
   }, []);
-
-  useEffect(() => {
-    console.info("useEffect: pointerLockControlsRef");
-    if (pointerLockControlsRef.current) {
-      pointerLockControlsRef.current.getObject().position.y = 1.75; // m
-    }
-  }, [enablePointerLockControls]);
 
   useEffect(() => {
     console.info("useEffect: PhysicsEnvironment");
     PhysicsEnvironment.init(KeyboardControls);
     PhysicsEnvironment.debug(scene);
     boxes.forEach((box) => {
-      PhysicsEnvironment.addBox(
-        new CANNON.Vec3(0.5, 0.5, 0.5),
-        0, // mass in kg
-        new CANNON.Vec3(box.position[0], box.position[1], box.position[2])
-      );
+      const dimensions = new CANNON.Vec3(BOX_SIZE, BOX_SIZE, BOX_SIZE);
+      const mass = 0; // kg
+      const position = new CANNON.Vec3(...box.position);
+      PhysicsEnvironment.addBox(dimensions, mass, position);
     });
   }, []);
 
   useFrame(() => {
-    if (pointerLockControlsRef.current) {
-      // Match Player Direction to the Camera Direction.
-      PhysicsEnvironment.player.quaternion.copy(
-        pointerLockControlsRef.current.getObject().quaternion
-      );
+    const camera = pointerRef.current.getObject();
+    const player = PhysicsEnvironment.player;
 
-      // set the position of the camera to the player position.
-      pointerLockControlsRef.current
-        .getObject()
-        .position.copy(PhysicsEnvironment.player.position);
+    player.quaternion.copy(camera.quaternion);
 
-      PhysicsEnvironment.simulate(Date.now());
-    }
+    camera.position.copy(player.position);
+    camera.position.y += 1.25; // 1,75 m
+
+    PhysicsEnvironment.simulate();
   });
 
   return (
     <>
-      {enablePointerLockControls && (
-        <PointerLockControls ref={pointerLockControlsRef} />
-      )}
-      <Plane args={[10, 10]} rotation={[THREE.MathUtils.degToRad(-90), 0, 0]}>
+      <PointerLockControls ref={pointerRef} />
+      <Plane
+        args={[PLANE_SIZE, PLANE_SIZE]}
+        rotation={[THREE.MathUtils.degToRad(-90), 0, 0]}
+        {...props}
+      >
         <meshBasicMaterial color={0x666666} side={THREE.DoubleSide} />
       </Plane>
       {boxes.map((box, index) => {
-        console.log("box:", index);
+        console.log("Box:", index);
         return (
           <Sphere
-            args={[0.5, 8, 8]}
+            args={[BOX_SIZE, 32, 32]}
             key={index}
             position={box.position}
             ref={box.ref}

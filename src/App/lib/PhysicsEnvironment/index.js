@@ -1,6 +1,7 @@
 import * as CANNON from "cannon-es";
 import * as THREE from "three";
 import cannonDebugger from "cannon-es-debugger";
+import { Vec3 } from "cannon-es";
 
 const FORCE_FORWARD_DIRECTION = 3;
 const FORCE_RIGHT_DIRECTION = 1;
@@ -131,7 +132,8 @@ class PhysicsEnvironment {
       PhysicsEnvironment.#controls.forwardDirection * -FORCE_FORWARD_DIRECTION
     ).applyQuaternion(PhysicsEnvironment.#playerBody.quaternion);
 
-    PhysicsEnvironment.#playerBody.velocity.copy(forceThreeVec);
+    PhysicsEnvironment.#playerBody.velocity.x = forceThreeVec.x;
+    PhysicsEnvironment.#playerBody.velocity.z = forceThreeVec.z;
     PhysicsEnvironment.#world.step(deltaT);
     PhysicsEnvironment.#time = time;
   }

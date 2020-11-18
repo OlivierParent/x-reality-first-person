@@ -39,9 +39,9 @@ export default (props) => {
     console.info("useEffect: PhysicsEnvironment");
     PhysicsEnvironment.init(KeyboardControls);
     PhysicsEnvironment.debug(scene);
+    const dimensions = new CANNON.Vec3(BOX_SIZE, BOX_SIZE, BOX_SIZE);
+    const mass = 0; // kg
     boxes.forEach((box) => {
-      const dimensions = new CANNON.Vec3(BOX_SIZE, BOX_SIZE, BOX_SIZE);
-      const mass = 0; // kg
       const position = new CANNON.Vec3(...box.position);
       PhysicsEnvironment.addBox(dimensions, mass, position);
     });

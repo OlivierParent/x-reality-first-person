@@ -5,6 +5,8 @@ import { Box, Plane, PointerLockControls } from "@react-three/drei";
 import { useControl } from "react-three-gui";
 import { KeyboardControls } from "App/lib";
 
+const MOVE_SPEED = 0.1;
+
 export default () => {
   const enablePointerLockControls = useControl("PointerLock Controls", {
     group: "Controls",
@@ -30,7 +32,6 @@ export default () => {
 
   useFrame(() => {
     if (pointerLockControlsRef.current) {
-      MOVE_SPEED = 0.1;
       pointerLockControlsRef.current.moveForward(
         MOVE_SPEED * KeyboardControls.forwardDirection
       );

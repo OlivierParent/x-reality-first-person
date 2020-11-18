@@ -14,6 +14,7 @@ class PhysicsEnvironment {
   static #controls;
   static #groundBody;
   static #physicsMaterial1 = new CANNON.Material("physicsMaterial1");
+  static #physicsContactMaterial;
   static #playerBody;
   static #time;
   static #world = new CANNON.World();
@@ -59,6 +60,7 @@ class PhysicsEnvironment {
     this.#controls = controls;
     this.#time = Date.now();
     this.initWorld();
+    this.initMaterial();
     this.initGround();
     this.initPlayer();
   }
@@ -76,15 +78,16 @@ class PhysicsEnvironment {
       THREE.MathUtils.degToRad(-90)
     );
     this.#world.addBody(this.#groundBody);
+    this.#bodies.push(this.#groundBody);
 
     // stairs
+    const angle = THREE.MathUtils.degToRad(-90 + 35);
+    const vector = new CANNON.Vec3(1, 0, 0);
     const stairsShape = new CANNON.Box(new CANNON.Vec3(1 / 2, 10 / 2, 0.1));
-    const stairsBody = new CANNON.Body({ mass: 0, shape: stairsShape });
+    const stairsBody = new CANNON.Body({ mass, shape: stairsShape });
+    stairsBody.quaternion.setFromAxisAngle(vector, angle);
     this.#world.addBody(stairsBody);
-    stairsBody.quaternion.setFromAxisAngle(
-      new CANNON.Vec3(1, 0, 0),
-      THREE.MathUtils.degToRad(-80 + 180)
-    );
+    this.#bodies.push(stairsBody);
   }
 
   /**
@@ -92,13 +95,11 @@ class PhysicsEnvironment {
    */
   static initMaterial() {
     console.info("PhysicsEnvironment: initMaterial");
-    const physicsContactMaterial = new CANNON.ContactMaterial(
+    this.#physicsContactMaterial = new CANNON.ContactMaterial(
       PhysicsEnvironment.#physicsMaterial1,
-      PhysicsEnvironment.#physicsMaterial1,
-      0.0,
-      0.3
+      PhysicsEnvironment.#physicsMaterial1
     );
-    this.#world.addContactMaterial(physicsContactMaterial);
+    this.#world.addContactMaterial(this.#physicsContactMaterial);
   }
 
   /**

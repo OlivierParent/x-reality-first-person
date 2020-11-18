@@ -60,7 +60,7 @@ class PhysicsEnvironment {
     this.#controls = controls;
     this.#time = Date.now();
     this.initWorld();
-    this.initMaterial();
+    // this.initMaterial();
     this.initGround();
     this.initPlayer();
   }
@@ -70,22 +70,23 @@ class PhysicsEnvironment {
    */
   static initGround() {
     console.info("PhysicsEnvironment: initGround");
+    const xAxis = new CANNON.Vec3(1, 0, 0);
     const mass = 0;
     const shape = new CANNON.Plane();
     this.#groundBody = new CANNON.Body({ mass, shape });
     this.#groundBody.quaternion.setFromAxisAngle(
-      new CANNON.Vec3(1, 0, 0),
+      xAxis,
       THREE.MathUtils.degToRad(-90)
     );
     this.#world.addBody(this.#groundBody);
     this.#bodies.push(this.#groundBody);
 
     // stairs
-    const angle = THREE.MathUtils.degToRad(-90 + 35);
-    const vector = new CANNON.Vec3(1, 0, 0);
-    const stairsShape = new CANNON.Box(new CANNON.Vec3(1 / 2, 10 / 2, 0.1));
+    const angleSlope = 35;
+    const angle = THREE.MathUtils.degToRad(-90 + angleSlope);
+    const stairsShape = new CANNON.Box(new CANNON.Vec3(1 / 2, 10 / 2, 0.2 / 2));
     const stairsBody = new CANNON.Body({ mass, shape: stairsShape });
-    stairsBody.quaternion.setFromAxisAngle(vector, angle);
+    stairsBody.quaternion.setFromAxisAngle(xAxis, angle);
     this.#world.addBody(stairsBody);
     this.#bodies.push(stairsBody);
   }

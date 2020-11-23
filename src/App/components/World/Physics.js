@@ -5,7 +5,7 @@ import { useFrame, useThree } from "react-three-fiber";
 import { Plane, PointerLockControls, Sphere } from "@react-three/drei";
 import { KeyboardControls, PhysicsEnvironment } from "App/lib";
 
-const BOX_SIZE = 0.5;
+const BOX_SIZE = 0.5; // m
 const NUMBER_OF_BOXES = 10;
 const PLANE_SIZE = 10;
 const RANDOM_COORDINATES = new Array(NUMBER_OF_BOXES).fill(null).map(() => {
@@ -51,8 +51,10 @@ export default (props) => {
     const camera = pointerRef.current.getObject();
     const player = PhysicsEnvironment.player;
 
+    // Match Player direction to Camera direction.
     player.quaternion.copy(camera.quaternion);
 
+    // Match Camera position to Player position.
     camera.position.copy(player.position);
     camera.position.y += 1.25; // 1,75 m
 
@@ -78,7 +80,11 @@ export default (props) => {
             position={box.position}
             ref={box.ref}
           >
-            <meshBasicMaterial color={0xffffff * Math.random()} />
+            <meshBasicMaterial
+              color={0xffffff * Math.random()}
+              opacity={0.75}
+              transparent={true}
+            />
           </Sphere>
         );
       })}
